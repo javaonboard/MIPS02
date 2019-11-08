@@ -1,0 +1,127 @@
+#@Author: Mohsen Shoraki
+#@Date: 11/7/2019
+#@Professor: Nhut Nguyen Ph.D
+#@Course: SE 3340.501 - Computer Architecture
+
+
+.data
+prompt1:		.asciiz "\nplease enter round sold pizzas?"
+prompt2:		.asciiz "\nplease enter square sold pizzas?"
+prompt3:		.asciiz "\nplease enter (estimate) total pizzas sold durring the day in square feet?"
+prompt4:		.asciiz "\nSold Round pizzas in SqFeet: "
+prompt5:		.asciiz "\nSold Sqaure pizzas in SqFeet: "
+prompt6:		.asciiz "\nTotal Sold pizzas in SqFeet: "
+bum:			.asciiz "\nBummer!"
+yeah:			.asciiz "\nYeah!"
+estimate:		.float 0.0
+square:			.word 10
+round: 			.word 8
+PI:				.float 3.14
+feet:			.float 12.0
+soldRound:		.float 0.0
+soldSquare:		.word 0
+totalSold: 		.float 0.0
+
+.text
+
+main:			li $v0, 4		#print first prompt
+			la $a0, prompt1
+			syscall
+			
+			li $v0, 5              #get round sold pizza and store it in $t0
+			syscall
+			add $t0,$zero, $v0
+			lw  $t1, round		#load round diameter
+			div $t1, $t1, 2        #get radius diameter/2
+			mul $t1, $t1, $t1	#radius square  r^2
+			
+			mtc1  $t1, $f1       #put word to fp register
+			cvt.s.w $f1, $f1     #convert it to fp.s
+				
+			
+			lwc1 $f2, PI           #load PI
+			mul.s $f1, $f1, $f2    #calculate the each round pizza
+		
+			mtc1  $t0, $f2         #move to word to fp register
+			cvt.s.w $f2, $f2    
+			
+			mul.s $f1, $f1, $f2    #calculate total sold pizza in inch
+			lwc1  $f0, feet
+			div.s $f0, $f1, $f0    #convert from inch to feet
+			swc1 $f0, soldRound    #store sold sq feet round pizzas
+	
+
+			li $v0, 4		#print second prompt
+			la $a0, prompt2
+			syscall
+			
+			li $v0, 5		#get square sold pizza and stroe it in $t1
+			syscall
+			add $t1,$zero, $v0
+			lw $t2, square
+			mul $t2, $t2, $t2	#calculate each pizza
+			mul $t1, $t1, $t2	#calculate all square pizzas that sold in inch
+			div $t1, $t1, 12       #calculate total sold pizaa in feet
+			sw $t1, soldSquare
+			
+			li $v0, 4		#print third prompt
+			la $a0, prompt3
+			syscall
+
+			li $v0, 6             #get floating point value from user and store it in est var
+			syscall
+			swc1 $f0, estimate    #store input to estimate var
+		
+total:			lw $t0, soldSquare    # load sold sqaure pizza and convert to fp
+			mtc1 $t0, $f1
+			cvt.s.w $f1, $f1
+			
+			lwc1 $f2, soldRound   # load sold round pizza
+			add.s $f1, $f1,$f2    #add both together round & square
+			swc1 $f1, totalSold   #store it in totalSold var
+			
+print:			li $v0, 4          #print total sold round pizzas in sqfeet
+			la $a0, prompt4     
+			syscall
+			li $v0, 2
+			lwc1 $f12, soldRound
+			syscall
+		
+			li $v0, 4        #print sold square pizza in sqfeet
+			la $a0, prompt5
+			syscall
+			li $v0, 1
+			lw $t0, soldSquare
+			move $a0, $t0
+			syscall
+		
+			li $v0, 4        #print Total sold pizza in square feet
+			la $a0, prompt6
+			syscall
+			li $v0, 2
+			lwc1 $f12, totalSold
+			syscall
+			
+compare:		lwc1 $f0, estimate	
+			c.lt.s $f1,$f0       #compare if sold< estimate
+			bc1t bummer
+			j    good
+
+bummer: 		li $v0, 4            #print bummer if estimate grreater than sold
+			la $a0, bum
+			syscall
+			j exit
+good:			li $v0, 4		#print Yeah if sold  is equal or greater than what estimated
+			la $a0, yeah
+			syscall
+
+exit:			li $v0, 10          #Terminatethe Program
+			syscall	
+		
+		
+		
+		
+
+		
+		
+	
